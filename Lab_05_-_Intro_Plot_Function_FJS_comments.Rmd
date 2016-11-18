@@ -1,0 +1,119 @@
+---
+title: "Lab 05 - Describing Data"
+author: "Francisco Santamarina"
+date: "October 13, 2016"
+output: pdf_document
+---
+Load the necessary packages and dataset.
+```{r}
+##load data
+library(dplyr)
+library(pander)
+library("Lahman")
+data("Teams")
+```
+
+# Question 1
+**1.	Drop all of the data before 1990.**<br>
+
+```{r}
+postteams <- filter(Teams, yearID>=1990)
+summary(postteams)
+```
+
+# Question 2
+**2.	Examine the relationship between Hits and Wins using a scatterplot. Use meaningful labels and a visually appealing style.**<br>
+```{r}
+plot( x=postteams$H, y=postteams$W,
+      xlim=c(750,2000), #limits the range of data for variable x
+      main="Hits and Wins per Seaso, 1990 to Present", #title
+      xlab="Hits by Team Per Season", #x-axis label
+      ylab="Wins Per Season", #y-axis label
+      col="green4", #color
+      pch=20, #indicates the plot symbol to use
+      cex=.8, #determines size of the symbols/plots
+      bty="n" #gets rid of the box around the plot
+    )
+
+```
+
+# Question 3
+**3.	Annotate two outliers on the graph with the teamID. You can identify the points using the identify function and clicking on the graph near the points to return their positions: identify( x, y )**<br>
+
+```{r}
+
+plot( x=postteams$H, y=postteams$W,
+      xlim=c(0000,2000), #limits the range of data for variable x
+      main="Hits and Wins per Season, 1990 to Present", #title
+      xlab="Hits by Team Per Season", #x-axis label
+      ylab="Wins Per Season", #y-axis label
+      col="green4", #color
+      pch=20, #indicates the plot symbol to use
+      cex=.8, #determines size of the symbols/plots
+      bty="n" #gets rid of the box around the plot
+    )
+
+text( x= 1306, y=43, labels= "Outlier 1", pos=4, col="gray0" )
+text( x= 1630, y=114, labels="Outlier 2", pos=4, col="gray0" )
+```
+
+# Question 4
+**4.	Examine the relationship between ERA and Wins using a scatterplot. Use meaningful labels and a visually appealing style.**<br>
+
+```{r}
+plot( x=postteams$ERA, y=postteams$W,
+      xlim=c(2,8), #limits the range of data for variable x
+      ylim=c(20,140), #limits the range of data for variable x
+      main="ERA and Wins Per Season, 1990 to Present", #title
+      xlab="Earned Runs Average Per Season", #x-axis label
+      ylab="Wins Per Season", #y-axis label
+      col="darkviolet", #color
+      pch=20, #indicates the plot symbol to use
+      cex=.8, #determines size of the symbols/plots
+      bty="n" #gets rid of the box around the plot
+    )
+```
+
+# Question 5
+**5.	Annotate two outliers on the graph with the teamID.**<br>
+
+```{r}
+
+identify( 8, 0 )
+identify( 7, 55 ) 
+
+plot( x=postteams$ERA, y=postteams$W,
+      xlim=c(2,8), #limits the range of data for variable x
+      ylim=c(20,140), #limits the range of data for variable x
+      main="ERA and Wins Per Season", #title
+      xlab="Earned Runs Average Per Season", #x-axis label
+      ylab="Wins Per Season", #y-axis label
+      col="darkviolet", #color
+      pch=20, #indicates the plot symbol to use
+      cex=.8, #determines size of the symbols/plots
+      bty="n" #gets rid of the box around the plot
+    )
+text( x= 6.5, y=53.4, labels= "Outlier 1", pos=4, col="gray0" )
+text( x= 3.6, y=116.8, labels="Outlier 2", pos=4, col="gray0" )
+```
+
+# Question 6
+**6.	BONUS - add a trend line to the scatterplot to highlight the relationship.**<br>
+
+```{r}
+plot( x=postteams$ERA, y=postteams$W,
+      xlim=c(2,8), #limits the range of data for variable x
+      ylim=c(20,140), #limits the range of data for variable x
+      main="ERA and Wins Per Season, 1990 to Present", #title
+      xlab="Earned Runs Average Per Season", #x-axis label
+      ylab="Wins Per Season", #y-axis label
+      col="darkviolet", #color
+      pch=20, #indicates the plot symbol to use
+      cex=.8, #determines size of the symbols/plots
+      bty="n" #gets rid of the box around the plot
+    )
+text( x= 6.5, y=53.4, labels= "Outlier 1", pos=4, col="gray0" )
+text( x= 3.6, y=116.8, labels="Outlier 2", pos=4, col="gray0" )
+
+lines( lowess(postteams$ERA, postteams$W), col="chocolate4", lwd=1)
+```

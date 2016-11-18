@@ -1,0 +1,110 @@
+---
+title: "Lab 02 - Logical Operators_FJS Comments"
+author: "Francisco Santamarina"
+date: "September 9, 2016"
+output: html_document
+---
+Load the necessary packages and dataset.
+```{r}
+##load data
+library(dplyr)
+library(pander)
+dat <- read.csv( "https://raw.githubusercontent.com/lecy/maps-in-R/master/Data/syr_parcels.csv" )
+```
+
+# Question 1
+What is the total assessed value of all of the taxable land in Syracuse?<br>
+* $7,538,424,950
+```{r}
+totalassessedva <- sum(dat$AssessedVa, na.rm=T)
+as.numeric((totalassessedva))
+```
+
+# Question 2
+What proportion of land parcels is not taxable? What is the value of these non-taxable parcels? <br>
+1. 12.28%
+2. $3,022,568,602
+```{r}
+# Proportion of land parcels that are not taxable
+unique( as.character( dat$LandUse ))
+#taxable <- dat$LandUse == c( "Single Family", "Commercial", "Two Family", "Three Family", "Apartment", "Industrial" )
+#     taxable <- dat$LandUse %in% c( "Single Family", "Commercial", "Two Family", "Three Family", "Apartment", "Industrial" )
+taxable <- dat$LandUse=="Single Family" | dat$LandUse=="Two Family" | dat$LandUse=="Three Family" | dat$LandUse=="Commercial" | dat$LandUse=="Apartment" | dat$LandUse=="Industrial"
+percent.nottaxable <- sum( !taxable ) / length(dat$LandUse)
+percent.nottaxable
+paste0((round((percent.nottaxable*100),digits = 2)),"%")
+
+#chris code
+#chris.code <- dat$LandUse=="Single Family" | dat$LandUse=="Two Family" | dat$LandUse=="Three Family" | dat$LandUse=="Commercial" | dat$LandUse=="Apartment" | dat$LandUse=="Industrial"
+#total.chris <- sum(!chris.code)
+#total <- total.chris/nrow(dat)
+#total
+
+#Value of the non-taxable parcels
+sum (dat$AssessedVa [!taxable])
+
+#  value.nontax <- !taxable & dat$AssessedVa
+#  sum( !taxable)
+
+#  summary( not.taxable, dat$AssessedVa)
+```
+
+# Question 3
+Which property has the highest delinquient tax bill?
+* Property with row location 22469 in the data set has the highest delinquent tax bill.
+```{r}
+which.max(dat$AmtDelinqu)
+max.delinquent <- dat[22469,]
+pander( max.delinquent )
+```
+
+# Question 4
+Which of these neighborhoods listed below has the highest proportion of vacant buildings? Use the Nhood
+and VacantBuil variables.
+* Strathmore, at 8.76% of vacancies.
+```{r}
+# empty.wcott <- dat$Nhood == "Westcott" & dat$VacantBuil == "Y"
+# proportion.wcott <- sum(empty.wcott, na.rm=T) / sum(dat$Nhood == "Westcott", na.rm=T)
+# proportion.wcott
+# paste0((round((proportion.wcott*100),digits = 2)),"%")
+
+find.vacantbld <- function(mycrib)
+{
+  empty.nhood <- dat$Nhood == mycrib & dat$VacantBuil == "Y"  
+  prop.emptynhood <- sum(empty.nhood, na.rm=T) / sum(dat$Nhood == mycrib, na.rm=T)
+  return(prop.emptynhood)
+}
+
+emptywcott <- find.vacantbld("Westcott")
+emptynside <- find.vacantbld("Northside")
+emptysmore <- find.vacantbld("Strathmore")
+emptysside <- find.vacantbld("Southside")
+empty.4hoods <- c(emptywcott,emptynside,emptysside, emptysmore)
+
+names(empty.4hoods) <- c("Westcott", "Northside", "Strathmore", "Southside")
+which.max(empty.4hoods)
+
+index<- which.max(empty.4hoods)
+prop.mostempty <- empty.4hoods[index]
+paste0((round((prop.mostempty*100),digits = 2)),"%")
+```
+
+# Question 5
+How many single family homes worth more than $100,000 each are located in each of the four neighborhoods
+above? Use the AssessedVa variable?
+* Westcott has 208 homes worth more than $100K
+* Northside has 5 homes worth more than $100K
+* Strathmore has 461 homes worth more than $100K
+* Southside has 0 homes worth more than $100K
+```{r}
+find.100khomes <- function(mycrib){
+  singlehome.inhood <- dat$LandUse=="Single Family" & dat$Nhood == mycrib & dat$AssessedVa > 100000 
+  return(sum(singlehome.inhood))
+}
+find.100khomes("Westcott")
+find.100khomes("Northside")
+find.100khomes("Strathmore")
+find.100khomes("Southside")
+
+```
+

@@ -1,0 +1,63 @@
+---
+title: "Lab 01 - Load a Package"
+author: "Francisco Santamarina"
+date: "September 5, 2016"
+output: html_document
+---
+The following code was written assuming that the user has already installed the Lahman package, but it has not been opened.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Question 1
+What is the average weight of an MLB player?
+
+**Answer:** Mean = 186
+```{r}
+library("Lahman")
+data("Master")
+summary(Master$weight)
+```
+***
+### Question 2
+How many MLB players have come from the Netherlands?
+
+**Answer:** 12 MLB players have come from the Netherlands
+```{r}
+library("Lahman")
+data("Master")
+table(Master$birthCountry)
+```
+***
+### Question 3
+How tall was the tallest player in MLB? The shortest?
+
+**Answer:** The tallest player in MLB was 83, and the shortest was 43
+```{r}
+library("Lahman")
+data("Master")
+summary(Master$height)
+```
+***
+### Question 4
+What percentage of players switch hit (bat from both sides of the plate)?
+
+**Answer:** 6.59% of players are switch hitters. 
+```{r}
+library("Lahman")
+data("Master")
+summary(Master$bats)
+switchhitter <- 1163
+total.hitter <- (1163+4879+11614)
+percent.switchhitter <- (switchhitter)/(total.hitter)
+paste((round((percent.switchhitter*100),digits = 2)),"%")
+```
+***
+### Question 5
+**OPTIONAL:** How many players are right-handed when they throw, but left-handed when they bat?
+```{r}
+##library("Lahman")
+##data("Master")
+## identify the list of players that are right-handed throwers. Set that value to "rightthrowers"
+## identify the list of players that are left-handed batters. Set that value to "leftbatters"
+## compare the list of values, and produce a summary of the count of combinations, such as left batter & left pitcher, right batter & right pitcher, etc. 
+```

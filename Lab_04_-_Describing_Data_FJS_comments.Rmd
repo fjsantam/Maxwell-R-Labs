@@ -1,0 +1,97 @@
+---
+title: "Lab 04 - Describing Data"
+author: "Francisco Santamarina"
+date: "September 27, 2016"
+output: pdf_document
+---
+Load the necessary packages and dataset.
+```{r}
+##load data
+library(dplyr)
+library(pander)
+dat <- read.csv( "https://raw.githubusercontent.com/lecy/maps-in-R/master/Data/syr_parcels.csv" )
+```
+
+# Question 1
+**What class is the dataset?**
+"data.frame"
+```{r}
+class(dat)
+```
+
+**How many rows of data are there?**
+41502 rows of unique data
+```{r}
+nrow(dat)
+```
+
+**How many variables?**
+64 variables
+```{r}
+length(dat)
+```
+
+**How would you check the class of a variables in the dataset?**
+```{r}
+names(dat)
+class(dat$TAX_ID)
+```
+
+# Question 2
+**2.	Convert your dataset into a tibble using the tbl_df() function. What is the class of the dataset now? How can you check rows, columns, and class of variables for the tibble?**<br>
+```{r}
+tbl.dat <- tbl_df(dat)
+```
+
+**What is the class of the dataset now?**<br>
+It is a tbl and inherits the class data.frame
+```{r}
+class(tbl.dat)
+typeof(tbl.dat)
+```
+
+**How can you check rows, columns, and class of variables for the tibble?**<br>
+```{r}
+#Rows/Observations, Columns/Variables, and class:
+glimpse(tbl.dat)
+```
+
+# Question 3
+**3.	Create a subset of the data by retaining the following set of variables:**<br>
+
+* Acres, LandUse, AmtDelinqu,  AssessedLa, VacantBuil, YearBuilt, Nhood<br>
+
+```{r}
+littletbl <- select(.data=tbl.dat, Acres, LandUse, AmtDelinqu, AssessedLa, VacantBuil, YearBuilt, Nhood)
+```
+
+# Question 4
+**4.	Drop the cases there the year of construction (YearBuilt) is reported as zero using the filter() function.**<br>
+
+```{r}
+no.0.littletbl <- filter(.data = littletbl, YearBuilt != 0)
+```
+
+# Question 5
+**5.	Create a new variable that measures the assessed land value (AssessedLa) per acre.**<br>
+
+```{r}
+alv.acre <- mutate(.data = no.0.littletbl, AssessedLa.acre = AssessedLa / Acres)
+```
+
+# Question 6
+**6.	Which neighborhood has the highest average land value per acre? Use the group_by() and summarise() functions to answer this question.**<br>
+Downtown, at an average of $895,080.30 per acre
+```{r}
+#g.alv.acre <- group_by(alv.acre, Nhood)
+#summ.g <- summarise( g.alv.acre, AvgALV.acre = mean( AssessedLa.acre))
+#arrange(summ.g, desc( AvgALV.acre) )
+
+arrange(summarise( group_by(alv.acre, Nhood), AvgALV.acre = mean( AssessedLa.acre)), desc( AvgALV.acre) )
+```
+
+# Question 7
+**7.	OPTIONAL: Create a new variable that splits the year of construction up by decade using the cut() function. Which decade produced single family homes with the highest assessed value (AssessedVa)?**<br>
+
+```{r}
+```

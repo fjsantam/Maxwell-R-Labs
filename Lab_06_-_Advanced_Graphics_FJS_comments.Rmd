@@ -1,0 +1,157 @@
+---
+title: "Lab 06 - Advanced Graphics"
+author: "Francisco Santamarina"
+date: "October 25, 2016"
+output: html_document
+---
+Load the necessary packages and dataset.
+```{r}
+##load data
+library( Lahman )
+library( dplyr )
+data( Teams )
+#ave.so <- Teams$SO / Teams$G
+years <- filter(Teams, Teams$yearID >= 1900 & Teams$yearID <=2012 & Teams$yearID != "NA")
+ave.so <- years$SO / years$G
+```
+
+#Part I
+
+## Question 1
+**Plot average strike-outs by year. Use the gray() function to select a color, and add transparency.**<br>
+
+```{r}
+plot( x=years$yearID, y=ave.so,
+      col=gray(0.5,0.3) #shade of gray (0=black, 1=white) and opacity
+    )
+```
+
+## Question 2
+**Use appropriate x and y axis conventions and labels.**<br>
+```{r}
+plot( x=years$yearID, y=ave.so,
+      col=gray(0.85, alpha=0.8 ), #shade of gray (0=black, 1=white) and opacity
+      xlim=c(1900,2012), 
+      ylim=c(0,10), 
+      yaxt='n',
+      xlab="",
+      ylab="",
+      #main="Hits and Wins per Seaso, 1990 to Present",
+      #xlab="Hits by Team Per Season", #x-ax
+      
+      abline( h=seq(0,9,1), #vertical line written ([lowest value], [highest value], [intervals to draw line])
+              lty=3, #line type
+              col=gray(0.5,1) #color of line
+              ),
+      #col="green4", #color
+      pch=16, #indicates the plot symbol to use
+      cex=1, #determines size of the symbols/plots
+      bty="n" #gets rid of the box around the plot
+    )
+axis( side=4, at=1:9, labels = c(1:9), las=1, col.axis=gray(0.85), tick = FALSE )
+```
+
+## Question 3
+**Calculate the league average using tapply() or group_by() year, and add it to the graph. Use the argument type="b" to connect the dots.**<br>
+
+```{r}
+plot( x=years$yearID, y=ave.so,
+      col=gray(0.85, alpha=0.8 ), #shade of gray (0=black, 1=white) and opacity
+      xlim=c(1900,2012), 
+      ylim=c(0,10), 
+      yaxt='n',
+      xlab="",
+      ylab="",
+      #main="Hits and Wins per Seaso, 1990 to Present",
+      #xlab="Hits by Team Per Season", #x-ax
+      
+      abline( h=seq(0,9,1), #vertical line written ([lowest value], [highest value], [intervals to draw line])
+              lty=3, #line type
+              col=gray(0.5,1) #color of line
+              ),
+      #col="green4", #color
+      pch=16, #indicates the plot symbol to use
+      cex=1, #determines size of the symbols/plots
+      bty="n" #gets rid of the box around the plot
+    )
+axis( side=4, at=1:9, labels = c(1:9), las=1, col.axis=gray(0.85), tick = FALSE )
+
+league.ave <- tapply( ave.so, years$yearID, mean, na.rm=T )
+#points( league.ave, type="b", col="blue3", pch=18)
+points( names(league.ave), league.ave, type="b", col="deepskyblue4", pch=16)
+```
+
+## Question 4
+**Reproduce at least two of the narrative texts ("US enters World War I", etc.). Note that a line break within text is created by including "\n" in your string.**<br>
+
+```{r}
+plot( x=years$yearID, y=ave.so,
+      col=gray(0.85, alpha=0.8 ), #shade of gray (0=black, 1=white) and opacity
+      xlim=c(1900,2012), 
+      ylim=c(0,10), 
+      axes=F,
+      xlab="",
+      ylab="",
+      #main="Hits and Wins per Seaso, 1990 to Present",
+      #xlab="Hits by Team Per Season", #x-ax
+      
+      abline( h=seq(0,9,1), #vertical line written ([lowest value], [highest value], [intervals to draw line])
+              lty=3, #line type
+              col=gray(0.7,1) #color of line
+              ),
+      #col="green4", #color
+      pch=16, #indicates the plot symbol to use
+      cex=1, #determines size of the symbols/plots
+      bty="n" #gets rid of the box around the plot
+    )
+axis( side=4, at=1:9, labels = c(1:9), las=1, col.axis=gray(0.5), tick = FALSE )
+axis( side=1, at=seq( 1900, 2012, 10 ),  las=1, col.axis=gray(0), tick = TRUE )
+
+
+league.ave <- tapply( ave.so, years$yearID, mean, na.rm=T )
+#points( league.ave, type="b", col="blue3", pch=18)
+points( names(league.ave), league.ave, type="o", col="dodgerblue3", pch=16)
+
+text( x= 1963, y=2.5, labels="Strike zone enlarged\nfrom 1963-68.", col=gray(0.5) )
+text( x= 1917, y=1, labels="U.S. enters\nWorld War I.", col=gray(0.5) )
+
+lines( x=1963,  y=5.805269, col=gray(0.5) )
+
+```
+
+#Part II
+
+## Question 1
+**Using R Shiny tools, add an input panel that allows users to select a team. Once selected, add the team trendline to the graph.**<br>
+
+```{r}
+selectInput( 
+             inputId='team', 
+             label='Choose a Team', 
+             choices=choices = unique( years$name )
+           )
+#input.ave <- filter(  )
+#points( names(league.ave), league.ave, type="b", col="dodgerblue3", pch=16)
+
+```
+
+## Question 2
+**Report the selected team name on the graph.**<br>
+
+```{r}
+plot( x=postteams$ERA, y=postteams$W,
+      xlim=c(2,8), #limits the range of data for variable x
+      ylim=c(20,140), #limits the range of data for variable x
+      main="ERA and Wins Per Season, 1990 to Present", #title
+      xlab="Earned Runs Average Per Season", #x-axis label
+      ylab="Wins Per Season", #y-axis label
+      col="darkviolet", #color
+      pch=20, #indicates the plot symbol to use
+      cex=.8, #determines size of the symbols/plots
+      bty="n" #gets rid of the box around the plot
+    )
+text( x= 6.5, y=53.4, labels= "Outlier 1", pos=4, col="gray0" )
+text( x= 3.6, y=116.8, labels="Outlier 2", pos=4, col="gray0" )
+
+lines( lowess(postteams$ERA, postteams$W), col="chocolate4", lwd=1)
+```

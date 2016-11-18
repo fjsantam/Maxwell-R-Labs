@@ -1,0 +1,63 @@
+---
+title: "Lab 08 - Regular Expressions"
+author: "Francisco Santamarina"
+date: "November 15, 2016"
+output: pdf_document
+---
+
+Load the necessary packages and dataset for questions 1 and 2.
+```{r}
+strings <-c("through","rough","thorough","throw","though","threw","thought","thru","trough")
+```
+
+## Question 1
+**[1] "through" "trough"**<br>
+
+```{r}
+grep( "^th*rough", strings, value = TRUE)
+```
+
+## Question 2
+**[1] "through"  "rough"    "thorough" "though"   "trough"**<br>
+```{r}
+grep( "^t?h*o*r?ough$", strings, value = TRUE)
+```
+
+***
+
+Load the necessary packages and dataset for questions 3, 4, and 5.
+```{r}
+strings <- c("lose","lost","hose","chose","hoser","chosen","loose","choose","looose","house")
+```
+
+
+## Question 3
+**[1] "chose"**<br>
+```{r}
+grep( "^chose$", strings, value = TRUE)
+```
+
+
+## Question 4
+**[1] "hose"  "hoser"**<br>
+```{r}
+grep( "^hose", strings, value = TRUE)
+```
+
+
+## Question 5
+**[1] "loose"  "looose"**<br>
+```{r}
+grep( "lo{2,}se", strings, value = TRUE)
+```
+
+***
+
+## Question 6
+**[1] "through"  "rough"    "thorough" "thought"  "trough"**<br>
+```{r}
+strings <-c("through","rough","thorough","ought","throw","thought","thru","trough")
+
+grep( "^t?h*o*r?[^ ]ought?", strings, value = TRUE)
+
+```

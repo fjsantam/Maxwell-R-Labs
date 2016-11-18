@@ -1,0 +1,82 @@
+---
+title: "Lab 03 - Merging Data"
+author: "Francisco Santamarina"
+date: "September 10, 2016"
+output: pdf_document
+---
+Load the necessary packages and dataset.
+```{r}
+##load data
+library(Lahman)
+```
+
+# Question 1
+**What is the average salary of a player on the Oakland A's in 2002?**
+
+$1,482,000
+
+**A player on the Boston Red Sox that same year?**
+
+$3,612,000
+
+**What is the total budget of each franchise in 2002?**
+Oakland A's: $40,004,167
+Boston Red Sox: $108,366,060
+
+To answer the question, merge the Salaries and Teams datasets.
+
+```{r}
+data( Master )
+data( Teams )
+data( Salaries )
+dat.salaries.teams <- merge( Salaries, Teams )
+OAK2002.salaries <- dat.salaries.teams$name == "Oakland Athletics" & dat.salaries.teams$yearID == "2002"
+#mean( dat.salaries.teams$salary [OAK2002.salaries], na.rm=T )#produces weird values
+summary(dat.salaries.teams$salary [OAK2002.salaries])
+
+#find players on Red Sox in 2002
+#merge that with salary
+#find average
+
+BOS2002.salaries <- dat.salaries.teams$name == "Boston Red Sox" & dat.salaries.teams$yearID == "2002"
+#mean( dat.salaries.teams$salary [BOS2002.salaries], na.rm=T )#produces weird values
+summary(dat.salaries.teams$salary [BOS2002.salaries])
+
+
+#find the franchises in 2002
+#find the salaries for each one
+#sum the salaries for each one
+#print as a table
+
+sum( dat.salaries.teams$salary [OAK2002.salaries] )
+sum( dat.salaries.teams$salary [BOS2002.salaries] )
+
+```
+
+# Question 2
+**2.	Which variables are used for the default merge? Why would the following merge be problematic?**<br>
+
+merge(  Teams, Salaries, by.x="teamID", by.y="teamID" )
+
+The variables being used are teamID from Teams and teamID from Salaries. 
+* This uses Teams as the primary table. Any independent players whose salaries are not associated to a team, or with a teamID, will not appear in the merged dataset. 
+* This assumes that teamID are the same uniqueID and are the appropriate variables to use
+* This merge will not include teams without salaries.
+
+# Question 3
+**3.	Which city (birth city) has produced the most baseball hall-of-famers? Use the Master and HallOfFame datasets.**<br>
+
+San Francisco, with 128 players
+
+To check which variables will be used for the default merge:
+intersect( names(HallOfFame), names(Master) )
+```{r}
+library(Lahman)
+data( Master )
+data( HallOfFame )
+intersect( names(HallOfFame), names(Master) )
+ls(Master)
+master.halloffame <- merge( Master, HallOfFame, by.x = "playerID", by.y = "playerID")
+sort( table( master.halloffame$birthCity))
+
+```
