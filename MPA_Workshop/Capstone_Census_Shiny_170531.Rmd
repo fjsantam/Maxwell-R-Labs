@@ -128,6 +128,9 @@ par(mfrow=c(2,3))
 ####### Code below originally written by Christopher Davis for use in Maxwell Indepedent Study, Spring 2017
 #create shiny plot
 renderPlot({
+  # Remove the line below if using the year slider
+  par(mfrow=c(2,3))
+  
   #reference the inputs from the user
   myName <- dat$variable
   #myYear <- input$yearInput
@@ -221,7 +224,7 @@ renderPlot({
           legend=legend.text, 
           col=col.ramp, 
           box.col="white",
-          title= paste(myName, "in", myYear, sep = " ") 
+          title= paste(myName, "in 2011 through 2015", sep = " ") 
          )
 }, width = 959, height= 665)
 
