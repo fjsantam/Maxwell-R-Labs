@@ -40,13 +40,13 @@ setwd("~/Graduate School/Capstone/Census")
 ##### Load the necessary datasets
 ```{r, results='hide'}
 # Read the .csv of the tracts data file into your R environment
-tracts <- read.csv( "CensusTracts.csv", header = T )
+tracts <- read.csv( "https://raw.githubusercontent.com/fjsantam/Maxwell-R-Labs/master/MPA_Workshop/CensusTracts.csv", header = T )
 
 # Read the .csv of the variables data file into your R environment
-variables <- read.csv( "CensusVariables.csv", header = T )
+variables <- read.csv( "https://raw.githubusercontent.com/fjsantam/Maxwell-R-Labs/master/MPA_Workshop/CensusVariables.csv", header = T )
 
 # Read the .csv of the ACS data file into your R environment
-dat <- read.csv( "ACSData.csv", header = T )
+dat <- read.csv( "https://raw.githubusercontent.com/fjsantam/Maxwell-R-Labs/master/MPA_Workshop/ACSData.csv", header = T )
 
 # Create the list of variables to be used in the selection pane of the shiny app
 var_names <- as.data.frame( unique( names(dat) ) )
@@ -90,7 +90,7 @@ library( tmaptools ) # another way to manipulate/read in shapefiles
 
 ##### Import GeoJSON map file
 ```{r}
-county <- readOGR( dsn = "C:/Users/franc/Documents/Graduate School/Capstone/Census/cortland.geojson" )
+county <- geojson_read( "https://raw.githubusercontent.com/fjsantam/Maxwell-R-Labs/master/MPA_Workshop/cortland.geojson" )
 
 #Confirm you have a shapefile:
 #class( county )
@@ -137,6 +137,7 @@ renderPlot({
   mar = c(0,0,0,0)
   oma = c(2,2,2,2)
   # Other ideas: http://seananderson.ca/courses/11-multipanel/multipanel.pdf
+  # Here too: http://research.stowers.org/mcm/efg/R/Graphics/Basics/mar-oma/index.htm
   
   #reference the inputs from the user
   myName <- input$variable
