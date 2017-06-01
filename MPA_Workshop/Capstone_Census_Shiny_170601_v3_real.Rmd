@@ -1,0 +1,510 @@
+---
+title: 'Capstone Census Shiny App'
+author: "Francisco Santamarina"
+date: "June 6, 2017"
+output:
+  html_document:
+    code_fold: hide
+    df_print: paged
+    keep_md: yes
+    toc: yes
+    toc_float: yes
+  runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set( message=F, warning=F )
+```
+
+## Load the packages
+```{r}
+# Libraries contain functions not in the base version of R allowing you greater flexibility and customization
+# These specific libraries are recommended by Professor Lecy for doing regressions.
+
+library( ggplot2 ) # Cool plots
+library( knitr ) # for formatting tables
+library( magrittr ) # cool ways of coding things that does more with less. Check it out!
+library( shiny )
+```
+
+## Set the working directory
+```{r, eval=FALSE}
+# Set the working directory
+getwd()
+setwd("~/Graduate School/Capstone/Census")
+
+```
+
+
+## Load the necessary datasets
+```{r, results='hide'}
+# Read the .csv of the tracts data file into your R environment
+tracts <- read.csv( "CensusTracts.csv", header = T )
+
+# Read the .csv of the variables data file into your R environment
+variables <- read.csv( "CensusVariables.csv", header = T )
+
+# Read the .csv of the ACS data file into your R environment
+dat <- read.csv( "ACSData.csv", header = T )
+
+# Create the list of variables to be used in the selection pane of the shiny app
+var_names <- as.data.frame( unique( names(dat) ) )
+#var_names <- as.data.frame( var_names[ -c(1:4,93:94), ] )
+var_names <- var_names[ -c(1:4,93:94), ]
+names( var_names ) <- NULL #removes the column header from the dataframe
+years <- unique( dat$YEAR )
+```
+
+## Clean the Census Tracts data
+```{r}
+# CLEANING THE TRACTS DATA
+# Return the structure of the vector "dat"
+#str( tracts )
+
+tracts_county <- tracts[ -13, ]
+tracts_county <- as.data.frame( tracts_county )
+#str( tracts_county )
+
+tracts_city <- tracts[14:18,]
+tracts_city <- as.data.frame( tracts_city )
+#str( tracts_city )
+
+rm( tracts )
+```
+
+# Load the Maps
+## Map libraries
+```{r}
+library( geojsonio ) # for manipulating GeoJSON files
+library( maps )
+library( maptools ) # for manipulating shapefile data, can also use to import shapefiles
+library( raster ) # another package for importing
+library( RColorBrewer ) 
+library( rgdal ) # for importing shapefiles into R
+library( spdplyr ) # for manipulating attribute data within shapefiles, can use DPLYR functions on shapefiles
+library( rmapshaper ) # for manipulating geometries within GeoJSON files
+library( sp ) # for manipulating spatial points data
+library( tmaptools ) # another way to manipulate/read in shapefiles
+```
+
+## Import GeoJSON
+```{r}
+county <- readOGR( dsn = "C:/Users/franc/Documents/Graduate School/Capstone/Census/cortland.geojson" )
+
+#Confirm you have a shapefile:
+#class( county )
+
+#See how it looks: 
+#plot( county )
+
+#Plot the shapefile another way:
+#qtm( county )
+
+#county@data
+```
+
+
+# Shiny Tool v1
+Info on Shiny Tools can be found [here](https://shiny.rstudio.com/).
+```{r, eval=F}
+# Consider creating descriptive variables in percent form for "number of [x] residents" variables
+# https://github.com/lecy/SyracuseLandBank/blob/master/BUILD/Census/CensusData.md
+
+selectInput( 
+           inputId='variable', 
+           label='Choose a Census Variable', 
+           choices = var_names,
+           width = "160px"
+           #selected = " All Stations"
+         )
+# If want to do a slider for year instead, use this code and add a YEAR holder
+#sliderInput(
+#          inputId='year', 
+#          label='Choose a Year', 
+#          choices = years
+#        )
+
+####### Code below originally written by Christopher Davis for use in Maxwell Indepedent Study, Spring 2017
+#create shiny plot
+renderPlot({
+  # Remove the line below if using the year slider
+  par(mfrow=c(2,3))
+  
+  #reference the inputs from the user
+  myName <- input$variable
+  #myYear <- input$yearInput
+  #yr2011 <- dat$YEAR == 2011
+  #yr2012 <- dat$YEAR == 2012
+  #yr2013 <- dat$YEAR == 2013
+  #yr2014 <- dat$YEAR == 2014
+  #yr2015 <- dat$YEAR == 2015
+  
+  #subset by year
+  #myData <- forDescriptives[fullFrame$YEAR==myYear, ]
+  data2011 <- dat[dat$YEAR==2011, ] 
+  data2012 <- dat[dat$YEAR==2012, ]
+  data2013 <- dat[dat$YEAR==2013, ]
+  data2014 <- dat[dat$YEAR==2014, ]
+  data2015 <- dat[dat$YEAR==2015, ]
+  
+  
+  #get variable for plot
+  #myVar <- myData[, myName]
+  myVar2011 <- data2011[, myName]
+  myVar2012 <- data2012[, myName]
+  myVar2013 <- data2013[, myName]
+  myVar2014 <- data2014[, myName]
+  myVar2015 <- data2015[, myName]
+  
+  #remove NAs
+  #myVar[is.na(myVar)] <- 0
+  myVar2011[ is.na( myVar2011 ) ] <- 0
+  myVar2012[ is.na( myVar2012 ) ] <- 0
+  myVar2013[ is.na( myVar2013 ) ] <- 0
+  myVar2014[ is.na( myVar2014 ) ] <- 0
+  myVar2015[ is.na( myVar2015 ) ] <- 0
+  
+  
+  # Create color scheme for plot
+  color.function <- colorRampPalette( c("firebrick4","light gray", "steel blue") ) 
+  col.ramp <- color.function( 5 ) # number of groups you desire
+  
+  # Create color vectors by year
+  ## For 2011 data:
+  color.vector2011 <- cut( rank(myVar2011), breaks=5, labels=col.ramp )
+  color.vector2011 <- as.character( color.vector2011 )
+  ## For 2012 data:
+  color.vector2012 <- cut( rank(myVar2012), breaks=5, labels=col.ramp )
+  color.vector2012 <- as.character( color.vector2012 )
+  ## For 2013 data:
+  color.vector2013 <- cut( rank(myVar2013), breaks=5, labels=col.ramp )
+  color.vector2013 <- as.character( color.vector2013 )
+  ## For 2014 data:
+  color.vector2014 <- cut( rank(myVar2014), breaks=5, labels=col.ramp )
+  color.vector2014 <- as.character( color.vector2014 )
+  ## For 2015 data:
+  color.vector2015 <- cut( rank(myVar2015), breaks=5, labels=col.ramp )
+  color.vector2015 <- as.character( color.vector2015 )
+  
+  # Create a vector for matching
+  this.order <- match( county$TRACTCE10, dat$TRACT )
+  ## Order color vectors for 2011 data:
+  color.vec.ordered.2011 <- color.vector2011[ this.order ]
+  ## Order color vectors for 2012 data:
+  color.vec.ordered.2012 <- color.vector2012[ this.order ]
+  ## Order color vectors for 2013 data:
+  color.vec.ordered.2013 <- color.vector2013[ this.order ]
+  ## Order color vectors for 2014 data:
+  color.vec.ordered.2014 <- color.vector2014[ this.order ]
+  ## Order color vectors for 2015 data:
+  color.vec.ordered.2015 <- color.vector2015[ this.order ]
+  
+  # Create plots for each year
+  #plot(syr, col=color.vec.ordered, main = paste(myName, "in", myYear, sep = " "), cex.main = 2)
+  
+  ## 2011 Plot
+  plot( county, col=color.vec.ordered.2011, main = paste(myName, "in 2011", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create labels for legend
+  first <- round(quantile(myVar2011, probs = seq(0, .8, .2)), digits = 2)
+  last <- round(quantile(myVar2011, probs = seq(.2, 1, .2)), digits = 2)
+  legend.text.2011 <- paste(first, last, sep = "-")
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=2,
+          legend=legend.text.2011, 
+          col=col.ramp, 
+          box.col="white",
+          title= paste(myName, "in 2011", sep = " ") 
+         )
+  
+  ## 2012 Plot
+  plot( county, col=color.vec.ordered.2012, main = paste(myName, "in 2012", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create labels for legend
+  first <- round(quantile(myVar2012, probs = seq(0, .8, .2)), digits = 2)
+  last <- round(quantile(myVar2012, probs = seq(.2, 1, .2)), digits = 2)
+  legend.text.2012 <- paste(first, last, sep = "-")
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=2,
+          legend=legend.text.2012, 
+          col=col.ramp, 
+          box.col="white",
+          title= paste(myName, "in 2012", sep = " ") 
+         )
+  
+  ## 2013 Plot
+  plot( county, col=color.vec.ordered.2013, main = paste(myName, "in 2013", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create labels for legend
+  first <- round(quantile(myVar2013, probs = seq(0, .8, .2)), digits = 2)
+  last <- round(quantile(myVar2013, probs = seq(.2, 1, .2)), digits = 2)
+  legend.text.2013 <- paste(first, last, sep = "-")
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=2,
+          legend=legend.text.2013, 
+          col=col.ramp, 
+          box.col="white",
+          title= paste(myName, "in 2013", sep = " ") 
+         )
+  
+  ## 2014 Plot
+  plot( county, col=color.vec.ordered.2014, main = paste(myName, "in 2014", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create labels for legend
+  first <- round(quantile(myVar2014, probs = seq(0, .8, .2)), digits = 2)
+  last <- round(quantile(myVar2014, probs = seq(.2, 1, .2)), digits = 2)
+  legend.text.2014 <- paste(first, last, sep = "-")
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=2,
+          legend=legend.text.2014, 
+          col=col.ramp, 
+          box.col="white",
+          title= paste(myName, "in 2014", sep = " ") 
+         )
+  
+  ## 2015 Plot
+  plot( county, col=color.vec.ordered.2015, main = paste(myName, "in 2015", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create labels for legend
+  first <- round(quantile(myVar2015, probs = seq(0, .8, .2)), digits = 2)
+  last <- round(quantile(myVar2015, probs = seq(.2, 1, .2)), digits = 2)
+  legend.text.2015 <- paste(first, last, sep = "-")
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=2,
+          legend=legend.text.2015, 
+          col=col.ramp, 
+          box.col="white",
+          title= paste(myName, "in 2015", sep = " ") 
+         )
+  
+}, width = 959, height= 665)
+
+```
+
+# Shiny Tool v2
+Info on Shiny Tools can be found [here](https://shiny.rstudio.com/).
+```{r}
+# Consider creating descriptive variables in percent form for "number of [x] residents" variables
+# https://github.com/lecy/SyracuseLandBank/blob/master/BUILD/Census/CensusData.md
+
+selectInput( 
+           inputId='variable', 
+           label='Choose a Census Variable', 
+           choices = var_names,
+           width = "160px"
+           #selected = " All Stations"
+         )
+# If want to do a slider for year instead, use this code and add a YEAR holder
+#sliderInput(
+#          inputId='year', 
+#          label='Choose a Year', 
+#          choices = years
+#        )
+
+####### Code below originally written by Christopher Davis for use in Maxwell Indepedent Study, Spring 2017
+#create shiny plot
+renderPlot({
+  # Remove the line below if using the year slider
+  par(mfrow=c(2,3)) # Puts the 5 maps in the same panel
+  mar = c(0,0,0,0) # Strips margins
+
+  
+  #reference the inputs from the user
+  #myName <- var_names[2]
+  myName <- input$variable  #######################  USE THIS LINE IN THE SHINY APP
+  #myYear <- input$yearInput
+  #yr2011 <- dat$YEAR == 2011
+  #yr2012 <- dat$YEAR == 2012
+  #yr2013 <- dat$YEAR == 2013
+  #yr2014 <- dat$YEAR == 2014
+  #yr2015 <- dat$YEAR == 2015
+  
+  #subset by year
+  #myData <- forDescriptives[fullFrame$YEAR==myYear, ]
+  data2011 <- dat[dat$YEAR==2011, ] 
+  data2012 <- dat[dat$YEAR==2012, ]
+  data2013 <- dat[dat$YEAR==2013, ]
+  data2014 <- dat[dat$YEAR==2014, ]
+  data2015 <- dat[dat$YEAR==2015, ]
+  
+  
+  #get variable for plot
+  #myVar <- myData[, myName]
+  myVar <- dat[, c( myName, 93 ) ]
+  myVar2 <- dat[ , myName ]
+  myVar2011 <- data2011[, myName]
+  myVar2012 <- data2012[, myName]
+  myVar2013 <- data2013[, myName]
+  myVar2014 <- data2014[, myName]
+  myVar2015 <- data2015[, myName]
+  
+  #remove NAs
+  #myVar[is.na(myVar)] <- 0
+  myVar[ is.na( myVar ) ] <- 0
+  myVar2011[ is.na( myVar2011 ) ] <- 0
+  myVar2012[ is.na( myVar2012 ) ] <- 0
+  myVar2013[ is.na( myVar2013 ) ] <- 0
+  myVar2014[ is.na( myVar2014 ) ] <- 0
+  myVar2015[ is.na( myVar2015 ) ] <- 0
+  
+  
+  # Create color scheme for plot
+  color.function <- colorRampPalette( c("firebrick4","light gray", "steel blue") ) 
+  col.ramp <- color.function( 5 ) # number of groups you desire
+  
+  # Create a single color vector across years
+  #color.vector <- cut( rank(myVar), breaks=5, labels=col.ramp )
+  #color.vector <- as.character( color.vector )
+  myVar[ "color.vector" ] <- cut( rank(myVar[,1]), breaks=5, labels=col.ramp )
+  myVar$color.vector <- as.character( myVar$color.vector )
+  
+  # Create a vector for matching
+  this.order <- match( county$TRACTCE10, dat$TRACT )
+  ## Order color vectors:
+  #color.vec.ordered <- color.vector[ this.order ]
+  color.vec.ordered <- myVar[ this.order, ]
+  ## Create labels for legend
+  first <- round(quantile(myVar[,1], probs = seq(0, .8, .2)), digits = 2)
+  last <- round(quantile(myVar[,1], probs = seq(.2, 1, .2)), digits = 2)
+  legend.text <- paste(first, last, sep = "-")
+  
+  
+  # Create color vectors by year
+  ## For 2011 data:
+  #color.vector2011 <- cut( rank(myVar2011), breaks=5, labels=col.ramp )
+  #color.vector2011 <- as.character( color.vector2011 )
+  
+  myVar2011.2 <- myVar[myVar$YEAR==2011, ] 
+  color.vector2011 <- cut( rank( myVar2011.2[,1]), breaks=5, labels=col.ramp )
+  color.vector2011 <- as.character( color.vector2011 )
+  
+  
+  ## For 2012 data:
+  #color.vector2012 <- cut( rank(myVar2012), breaks=5, labels=col.ramp )
+  #color.vector2012 <- as.character( color.vector2012 )
+  
+  myVar2012.2 <- myVar[myVar$YEAR==2012, ] 
+  color.vector2012 <- cut( rank( myVar2012.2[,1]), breaks=5, labels=col.ramp )
+  color.vector2012 <- as.character( color.vector2012 )
+  
+  
+  ## For 2013 data:
+  #color.vector2013 <- cut( rank(myVar2013), breaks=5, labels=col.ramp )
+  #color.vector2013 <- as.character( color.vector2013 )
+  
+  myVar2013.2 <- myVar[myVar$YEAR==2013, ] 
+  color.vector2013 <- cut( rank( myVar2013.2[,1]), breaks=5, labels=col.ramp )
+  color.vector2013 <- as.character( color.vector2013 )
+  
+  
+  ## For 2014 data:
+  #color.vector2014 <- cut( rank(myVar2014), breaks=5, labels=col.ramp )
+  #color.vector2014 <- as.character( color.vector2014 )
+  
+  myVar2014.2 <- myVar[myVar$YEAR==2014, ] 
+  color.vector2014 <- cut( rank( myVar2014.2[,1]), breaks=5, labels=col.ramp )
+  color.vector2014 <- as.character( color.vector2014 )
+  
+  
+  ## For 2015 data:
+  #color.vector2015 <- cut( rank(myVar2015), breaks=5, labels=col.ramp )
+  #color.vector2015 <- as.character( color.vector2015 )
+  
+  myVar2015.2 <- myVar[myVar$YEAR==2015, ] 
+  color.vector2015 <- cut( rank( myVar2015.2[,1]), breaks=5, labels=col.ramp )
+  color.vector2015 <- as.character( color.vector2015 )
+  
+  
+  ## Order color vectors for 2011 data:
+  color.vec.ordered.2011 <- color.vector2011[ this.order ]
+  ## Order color vectors for 2012 data:
+  color.vec.ordered.2012 <- color.vector2012[ this.order ]
+  ## Order color vectors for 2013 data:
+  color.vec.ordered.2013 <- color.vector2013[ this.order ]
+  ## Order color vectors for 2014 data:
+  color.vec.ordered.2014 <- color.vector2014[ this.order ]
+  ## Order color vectors for 2015 data:
+  color.vec.ordered.2015 <- color.vector2015[ this.order ]
+
+  
+  # Create plots for each year
+  #plot(syr, col=color.vec.ordered, main = paste(myName, "in", myYear, sep = " "), cex.main = 2)
+  
+  ## 2011 Plot
+  plot( county, col=color.vec.ordered.2011, main = paste(myName, "in 2011", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=1.5,
+          legend=legend.text, 
+          col=col.ramp, 
+          box.col="white"
+          #title= paste(myName, "in 2011", sep = " ") 
+         )
+  
+  ## 2012 Plot
+  plot( county, col=color.vec.ordered.2012, main = paste(myName, "in 2012", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=1.5,
+          legend=legend.text, 
+          col=col.ramp, 
+          box.col="white"
+          #title= paste(myName, "in 2012", sep = " ") 
+         )
+  
+  ## 2013 Plot
+  plot( county, col=color.vec.ordered.2013, main = paste(myName, "in 2013", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=1.5,
+          legend=legend.text, 
+          col=col.ramp, 
+          box.col="white"
+          #title= paste(myName, "in 2013", sep = " ") 
+         )
+  
+  ## 2014 Plot
+  plot( county, col=color.vec.ordered.2014, main = paste(myName, "in 2014", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=1.5,
+          legend=legend.text, 
+          col=col.ramp, 
+          box.col="white"
+          #title= paste(myName, "in 2014", sep = " ") 
+         )
+  
+  ## 2015 Plot
+  plot( county, col=color.vec.ordered.2015, main = paste(myName, "in 2015", sep = " "), cex.main = 2)
+  ### create scale
+  map.scale( metric=F, ratio=F, relwidth = 0.15, cex=2 )
+  ### Create legend
+  legend( "bottomright", bg="white",
+          pch=19, pt.cex=2, cex=1.5,
+          legend=legend.text, 
+          col=col.ramp, 
+          box.col="white"
+          #title= paste(myName, "in 2015", sep = " ") 
+         )
+  
+}, width = 959, height= 665)
+
+```
