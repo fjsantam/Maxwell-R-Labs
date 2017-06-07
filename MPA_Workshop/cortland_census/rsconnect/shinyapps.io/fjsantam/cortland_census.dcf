@@ -1,0 +1,10 @@
+name: cortland_census
+title: cortland_census
+account: fjsantam
+server: shinyapps.io
+appId: 185824
+bundleId: 853901
+url: https://fjsantam.shinyapps.io/cortland_census/
+when: 1496682828.67733
+asMultiple: FALSE
+asStatic: FALSE
