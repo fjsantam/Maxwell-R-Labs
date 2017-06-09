@@ -1,0 +1,148 @@
+---
+title: 'Generating geoJSON file of Cortland County'
+author: "Francisco Santamarina"
+date: "May 31, 2017"
+output:
+  html_document:
+    code_fold: hide
+    df_print: paged
+    keep_md: yes
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set( message=F, warning=F )
+```
+
+## Load the packages
+```{r}
+# Libraries contain functions not in the base version of R allowing you greater flexibility and customization
+# These specific libraries are recommended by Professor Lecy for doing regressions.
+
+library( ggplot2 ) # Cool plots
+library( knitr ) # for formatting tables
+library( magrittr ) # cool ways of coding things that does more with less. Check it out!
+library( shiny )
+```
+
+## Set the working directory
+```{r, eval=FALSE}
+# Set the working directory
+getwd()
+setwd("~/Graduate School/Capstone/Census")
+
+```
+
+
+## Load the necessary datasets
+```{r, results='hide'}
+# Read the .csv of the tracts data file into your R environment
+tracts <- read.csv( "CensusTracts.csv", header = T )
+
+# Read the .csv of the variables data file into your R environment
+variables <- read.csv( "CensusVariables.csv", header = T )
+
+# Read the .csv of the ACS data file into your R environment
+dat <- read.csv( "ACSData.csv", header = T )
+
+var_names <- as.data.frame( unique( names(dat) ) )
+var_names <- as.data.frame( var_names[ -c(1:4,93:94), ] )
+years <- unique( dat$YEAR )
+```
+
+## Clean the Census Tracts data
+```{r}
+# CLEANING THE TRACTS DATA
+# Return the structure of the vector "dat"
+str( tracts )
+
+tracts_county <- tracts[ -13, ]
+tracts_county <- as.data.frame( tracts_county )
+str( tracts_county )
+
+tracts_city <- tracts[14:18,]
+tracts_city <- as.data.frame( tracts_city )
+str( tracts_city )
+
+rm( tracts )
+```
+
+# Prep the Maps
+Shapefile zip located here: https://www.census.gov/cgi-bin/geo/shapefiles/index.php?year=2010&layergroup=Census+Tracts
+**_Download the 2010 version for compatibility with the 2010 census data_**
+
+## Map libraries
+```{r}
+library( geojsonio ) # for manipulating GeoJSON files
+library( maptools ) # for manipulating shapefile data, can also use to import shapefiles
+library( raster ) # another package for importing
+library( rgdal ) # for importing shapefiles into R
+library( spdplyr ) # for manipulating attribute data within shapefiles, can use DPLYR functions on shapefiles
+library( rmapshaper ) # for manipulating geometries within GeoJSON files
+library( sp ) # for manipulating spatial points data
+library( tmaptools ) # another way to manipulate/read in shapefiles
+```
+
+## Clean the shapefiles
+Set the working directory
+```{r}
+setwd("~/Graduate School/Capstone/Census/Cortland_County_tl_2016_36023_addrfeat")
+```
+Load the TIGER shapefiles
+```{r}
+#county <- readOGR(dsn = "~/Graduate School/Capstone/Census/Cortland_County_tl_2016_36023_addrfeat",
+#                  layer = "tl_2016_36023_addrfeat", verbose = FALSE 
+#                  )
+#county <- readOGR(dsn = "/Cortland_County_tl_2016_36023_addrfeat/tl_2016_36023_addrfeat.shp" )
+
+county <- shapefile( "~/Graduate School/Capstone/Census/Cortland_County_tl_2010_36023_tract10/tl_2010_36023_tract10.shp" )
+
+#Confirm you have a shapefile:
+class( county )
+
+#See how it looks: 
+plot( county )
+
+#Check out the data in your vector using "@" to call the data within the shapefile:
+head( county@data )
+
+#proj4string( county ) <- CRS("+proj=longlat +datum=WGS84")
+
+#Alternate code: 
+county = read_shape("C:/Users/franc/Documents/Graduate School/Capstone/Census/Cortland_County_tl_2010_36023_tract10/tl_2010_36023_tract10.shp")
+
+#Plot the shapefile:
+qtm(county)
+```
+
+V1: Convert Shapefile to GeoJSON
+We will be following the steps here: https://blog.exploratory.io/creating-geojson-out-of-shapefile-in-r-40bc0005857d
+```{r}
+county <- county %>% rename( county_id = GEOID10 )
+
+# Convert to GeoJSON
+county <- geojson_json(county)
+
+# Confirm the class
+class( county )
+
+# See how it looks
+plot(county)
+
+geojson_write( county, file = "~/cortland_county.geojson" )
+```
+
+V2: Convert Shapefile to GeoJSON **EASIER VERSION**
+We will be following the steps here: https://github.com/Robinlovelace/Creating-maps-in-R/blob/master/R/shp-to-geojson.R
+```{r}
+geojson_write( county, file = "C:/Users/franc/Documents/Graduate School/Capstone/Census/cortland.geojson" )
+
+# Should return: "Success! File is at (directory specified above)"
+```
+
+## Test GeoJSON file
+```{r}
+cortland <- readOGR( dsn = "C:/Users/franc/Documents/Graduate School/Capstone/Census/cortland.geojson" )
+plot(cortland)
+```
